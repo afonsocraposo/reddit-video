@@ -145,10 +145,10 @@ if __name__ == "__main__":
     intro_img(author, title, description)
     read_save(title + ". " + description, 0)
 
-    submission.comments.replace_more(limit=0)
+    submission.comments.replace_more(limit=None)
     counter = 1
     for top_level_comment in submission.comments:
-        if limit is not None and counter > limit:
+        if (limit is not None and counter > limit) or top_level_comment.author is None:
             break
         author = top_level_comment.author.name
         comment = top_level_comment.body.replace("\n", " ")
