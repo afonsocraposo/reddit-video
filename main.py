@@ -199,7 +199,7 @@ def post_img_reply(
         image.save("images/{:03d}_1_t.png".format(number))
     else:
         # save file
-        image.save("images/{:03d}_0{}.png".format(number, append))
+        image.save("images/{:03d}_0.png".format(number))
 
 
 def get_image_audio(filename):
