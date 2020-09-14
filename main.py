@@ -10,27 +10,14 @@ import requests
 from io import BytesIO
 
 
-def read_save(text, filename, reply=False, transition=True):
+def read_save(text, filename):
     tts = gtts.gTTS(text, lang="pt-pt",)
     tts.save("audios/{}_temp.mp3".format(filename))
-    if transition:
-        os.system(
-            'ffmpeg -i audios/{}_temp.mp3 -filter:a "atempo=1.5" -vn -loglevel quiet audios/{}_temp2.mp3 -y'.format(
-                filename, filename
-            )
+    os.system(
+        'ffmpeg -i audios/{}_temp.mp3 -filter:a "atempo=1.5" -vn -loglevel quiet audios/{}.mp3 -y'.format(
+            filename, filename
         )
-        os.system(
-            "ffmpeg -i audios/{}_temp2.mp3 -i transition.mp3 -filter_complex [0:a][1:a]concat=n=2:v=0:a=1 -vn -loglevel quiet audios/{}.mp3 -y".format(
-                filename, filename
-            )
-        )
-        os.system("rm audios/{}_temp2.mp3".format(filename))
-    else:
-        os.system(
-            'ffmpeg -i audios/{}_temp.mp3 -filter:a "atempo=1.5" -vn -loglevel quiet audios/{}.mp3 -y'.format(
-                filename, filename
-            )
-        )
+    )
     os.system("rm audios/{}_temp.mp3".format(filename))
     return int(
         os.popen(
@@ -81,7 +68,7 @@ def intro_img(author, title, description, score):
         y += line_height
 
     # save file
-    image.save("images/000.png")
+    image.save("images/000_t.png")
 
 
 def draw_header(draw, x, y, score, user):
@@ -134,7 +121,7 @@ def draw_header_comment(draw, x, y, score, user):
     )
 
 
-def post_img(author, text, score, number):
+def post_img(author, text, score, number, transition=True):
     font_size = 24
     width = 1920
     font_width = font_size // 1.55
@@ -156,12 +143,24 @@ def post_img(author, text, score, number):
         draw.text((90, y), line, font=font, fill="#ffffff")
         y += line_height
 
+    if transition:
+        append = "_t"
+    else:
+        append = ""
     # save file
-    image.save("images/{:03d}_0.png".format(number))
+    image.save("images/{:03d}_0{}.png".format(number, append))
 
 
 def post_img_reply(
-    author, text, score, author_reply, text_reply, score_reply, number, hide=False
+    author,
+    text,
+    score,
+    author_reply,
+    text_reply,
+    score_reply,
+    number,
+    hide=False,
+    transition=False,
 ):
     font_size = 24
     width = 1920
@@ -197,10 +196,10 @@ def post_img_reply(
             draw.text((128, y), line, font=font, fill="#ffffff")
             y += line_height
         # save file
-        image.save("images/{:03d}_1.png".format(number))
+        image.save("images/{:03d}_1_t.png".format(number))
     else:
         # save file
-        image.save("images/{:03d}_0.png".format(number))
+        image.save("images/{:03d}_0{}.png".format(number, append))
 
 
 def get_image_audio(filename):
@@ -209,11 +208,18 @@ def get_image_audio(filename):
             filename, filename, filename
         )
     )
+    transition = filename.endswith("_t")
+    if transition:
+        os.system(
+            "ffmpeg -loop 1 -i images/{}.png -i transition.mp3 -c:v libx264 -tune stillimage -c:a copy -pix_fmt yuv420p  -shortest videos/{}_transition.mp4 -v quiet -stats -y".format(
+                filename, filename, filename
+            )
+        )
 
 
 def render_video():
     cwd = os.getcwd()
-    filenames = [s[:-4] for s in os.listdir(cwd + "/images") if s.endswith(".png")]
+    filenames = [s[:-4] for s in os.listdir(cwd + "/audios") if s.endswith(".mp3")]
     filenames.sort()
 
     print("Generating parts")
@@ -222,6 +228,8 @@ def render_video():
             print(filename)
             get_image_audio(filename)
             file.write("file videos/{}.mp4\n".format(filename))
+            if filename.endswith("_t"):
+                file.write("file videos/{}_transition.mp4\n".format(filename))
     print("Concatenating every part")
     os.system(
         "ffmpeg -f concat -i videos_paths.txt -vf 'scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1' output.mp4 -v quiet -stats -y"
@@ -329,7 +337,7 @@ if __name__ == "__main__":
     generate_thumb(title, image_url)
 
     intro_img(author, title, description, submission.score)
-    duration -= read_save(title + ". " + description, "000")
+    duration -= read_save(title + ". " + description, "000_t")
 
     submission.comments.replace_more(limit=1)
     counter = 1
@@ -359,6 +367,7 @@ if __name__ == "__main__":
                     second_level_comment.score,
                     counter,
                     hide=True,
+                    transition=False,
                 )
                 post_img_reply(
                     author,
@@ -369,18 +378,18 @@ if __name__ == "__main__":
                     second_level_comment.score,
                     counter,
                 )
+                duration -= read_save(comment, "{:03d}_0".format(counter))
                 duration -= read_save(
-                    comment, "{:03d}_0".format(counter), transition=False
-                )
-                duration -= read_save(
-                    reply_comment, "{:03d}_1".format(counter), reply=True
+                    reply_comment, "{:03d}_1_t".format(counter), reply=True
                 )
                 has_comment = False
             else:
-                duration -= read_save(comment, "{:03d}_0".format(counter))
-                post_img(author, comment, top_level_comment.score, counter)
+                post_img(
+                    author, comment, top_level_comment.score, counter,
+                )
+                duration -= read_save(comment, "{:03d}_0_t".format(counter))
 
-            duration--
+            duration -= 1
             counter += 1
 
     render_video()
