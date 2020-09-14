@@ -14,7 +14,7 @@ def read_save(text, filename):
     tts = gtts.gTTS(text, lang="pt-pt",)
     tts.save("audios/{}_temp.mp3".format(filename))
     os.system(
-        'ffmpeg -i audios/{}_temp.mp3 -filter:a "atempo=1.5" -vn -loglevel quiet audios/{}.mp3 -y'.format(
+        'ffmpeg -i audios/{}_temp.mp3 -filter:a "atempo=1.6" -vn -loglevel quiet audios/{}.mp3 -y'.format(
             filename, filename
         )
     )
