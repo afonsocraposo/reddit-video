@@ -379,9 +379,7 @@ if __name__ == "__main__":
                     counter,
                 )
                 duration -= read_save(comment, "{:03d}_0".format(counter))
-                duration -= read_save(
-                    reply_comment, "{:03d}_1_t".format(counter), reply=True
-                )
+                duration -= read_save(reply_comment, "{:03d}_1_t".format(counter))
                 has_comment = False
             else:
                 post_img(
