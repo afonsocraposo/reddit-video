@@ -259,7 +259,8 @@ def generate_thumb(title, image_url):
     while True:
         font_width = font_size // 1.55
         line_height = int(font_size * 1.5)
-        lines_title = textwrap.wrap(title, width=((width - 10) // 2) // font_width)
+
+        lines_title = textwrap.wrap(title, width=int(((width - 10) // 2) // font_width))
         lines_title_nr = len(lines_title) + 1
         if lines_title_nr * line_height < 1080 - title_line_height:
             font_size = int(font_size * 1.5)
@@ -332,7 +333,7 @@ if __name__ == "__main__":
 
     submission.comments.replace_more(limit=1)
     counter = 1
-    has_comment = True
+    has_comment = False
     for top_level_comment in submission.comments:
         if duration < 0:
             break
@@ -345,6 +346,7 @@ if __name__ == "__main__":
                     if second_level_comment.score >= 0.5 * top_level_comment.score:
                         reply_comment = second_level_comment.body.replace("\n", " ")
                         reply_author = second_level_comment.author.name
+                        has_comment = True
                         print(counter, "reply", reply_comment)
                     break
             if has_comment:
@@ -378,6 +380,7 @@ if __name__ == "__main__":
                 duration -= read_save(comment, "{:03d}_0".format(counter))
                 post_img(author, comment, top_level_comment.score, counter)
 
+            duration--
             counter += 1
 
     render_video()
