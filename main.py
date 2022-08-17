@@ -332,7 +332,14 @@ if __name__ == "__main__":
     else:
         reply_thresh = 0.5
 
-    reddit = praw.Reddit("bot1")
+    reddit = praw.Reddit(
+        client_id="CLIENT_ID",
+        client_secret="CLIENT_SECRET",
+        password="PASSWORD",
+        user_agent="USER_AGENT",
+        username="USERNAME",
+    )
+
 
     submission = reddit.submission(url=url)
 
